@@ -44,10 +44,9 @@ class ModelGConvTranspose(nn.Module):
     def __init__(self, z_dim):
         self.z_dim = z_dim
         super(ModelGConvTranspose, self).__init__()
-        self.fc1 = nn.Linear(self.z_dim + 2 + 3, 64)
-        self.fc2 = nn.Linear(64, 128)
-        self.fc3 = nn.Linear(128, 512)
-        self.fc4 = nn.Linear(512, 20736)
+        self.fc1 = nn.Linear(self.z_dim + 2 + 3, 128)
+        self.fc2 = nn.Linear(128, 512)
+        self.fc3 = nn.Linear(512, 20736)
 
         self.conv1 = nn.ConvTranspose2d(256, 256, 3, stride=2, output_padding=1)
         self.bn1 = nn.BatchNorm2d(256)
@@ -66,8 +65,6 @@ class ModelGConvTranspose(nn.Module):
         x = F.leaky_relu(self.fc1(x))
         x = F.leaky_relu(self.fc2(x))
         x = F.leaky_relu(self.fc3(x))
-        x = F.leaky_relu(self.fc4(x))
-        
         EnergyDeposit = x.view(-1, 256, 9, 9)
         
         #print(EnergyDeposit.shape)
@@ -76,6 +73,7 @@ class ModelGConvTranspose(nn.Module):
         EnergyDeposit = F.leaky_relu(self.bn3(self.conv3(EnergyDeposit)))
         EnergyDeposit = F.leaky_relu(self.bn4(self.conv4(EnergyDeposit)))
         EnergyDeposit = F.leaky_relu(self.bn5(self.conv5(EnergyDeposit)))
+
         EnergyDeposit = self.conv6(EnergyDeposit)
 
         return EnergyDeposit
