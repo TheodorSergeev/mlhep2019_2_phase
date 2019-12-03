@@ -1,4 +1,8 @@
-class Baseline_ModelD(nn.Module):
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+
+class ModelD(nn.Module):
     def __init__(self):
         super(Baseline_ModelD, self).__init__()
         self.conv1 = nn.Conv2d(1, 32, 3)
@@ -33,7 +37,7 @@ class Baseline_ModelD(nn.Module):
             return torch.sigmoid(self.fc4(t))
 
 
-class ModelD(nn.Module):
+class NewModelD(nn.Module):
     def __init__(self):
         super(ModelD, self).__init__()
         # todo: read about dilation to replace max pooling
