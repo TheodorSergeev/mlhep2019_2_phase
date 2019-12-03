@@ -1,6 +1,6 @@
 class Baseline_ModelD(nn.Module):
     def __init__(self):
-        super(ModelD, self).__init__()
+        super(Baseline_ModelD, self).__init__()
         self.conv1 = nn.Conv2d(1, 32, 3)
         self.bn1 = nn.BatchNorm2d(32)
         self.dropout = nn.Dropout(p=0.3)

@@ -6,7 +6,7 @@ NOISE_DIM = 10
 class Baseline_ModelGConvTranspose(nn.Module):
     def __init__(self, z_dim):
         self.z_dim = z_dim
-        super(ModelGConvTranspose, self).__init__()
+        super(Baseline_ModelGConvTranspose, self).__init__()
         self.fc1 = nn.Linear(self.z_dim + 2 + 3, 64)
         self.fc2 = nn.Linear(64, 128)
         self.fc3 = nn.Linear(128, 512)
