@@ -38,8 +38,14 @@ class ModelD(nn.Module):
         X = F.leaky_relu(self.ln4(self.conv4(X)))
         X = self.pool2(X)
         
-        X = X.view(len(X), -1)        
-        X = torch.cat([X, ParticleMomentum_ParticlePoint], dim=1)
+        X = X.view(len(X), -1)
+        MEAN_TRAIN_MOM_POINT = torch.Tensor([-0.08164814, -0.02489864, 20.8446184, 
+                                             -0.01204223,  0.02772552])
+        STD_TRAIN_MOM_POINT  = torch.Tensor([ 5.4557047,   5.38253167, 24.26102735, 
+                                              2.69435522,  2.65776869])
+
+        mom_point = (ParticleMomentum_ParticlePoint - MEAN_TRAIN_MOM_POINT) / STD_TRAIN_MOM_POINT
+        X = torch.cat([X, mom_point], dim=1)
         
         X = F.leaky_relu(self.fcbn1(self.fc1(X)))
         X = F.leaky_relu(self.fcbn2(self.fc2(X)))

@@ -25,7 +25,14 @@ class ModelGConvTranspose(nn.Module):
         self.conv6 = nn.ConvTranspose2d(16, 1, 3)
         
     def forward(self, z, ParticleMomentum_ParticlePoint):
-        x = torch.cat([z, ParticleMomentum_ParticlePoint], dim=1)
+        MEAN_TRAIN_MOM_POINT = torch.Tensor([-0.08164814, -0.02489864, 20.8446184, 
+                                             -0.01204223,  0.02772552])
+        STD_TRAIN_MOM_POINT  = torch.Tensor([ 5.4557047,   5.38253167, 24.26102735, 
+                                              2.69435522,  2.65776869])
+
+        mom_point = (ParticleMomentum_ParticlePoint - MEAN_TRAIN_MOM_POINT) / STD_TRAIN_MOM_POINT
+        #mom_point = ParticleMomentum_ParticlePoint
+        x = torch.cat([z, mom_point], dim=1)
         x = F.leaky_relu(self.fc1(x))
         x = F.leaky_relu(self.fc2(x))
         x = F.leaky_relu(self.fc3(x))
