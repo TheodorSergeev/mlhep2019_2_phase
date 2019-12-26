@@ -10,7 +10,7 @@ class ModelGConvTranspose(nn.Module):
         self.fc1 = nn.Linear(self.z_dim + 2 + 3, 64)
         self.fc2 = nn.Linear(64, 128)
         self.fc3 = nn.Linear(128, 512)
-    self.fc4 = nn.Linear(512, 20736)
+        self.fc4 = nn.Linear(512, 20736)
 
         self.conv1 = nn.ConvTranspose2d(256, 256, 3, stride=2, output_padding=1)
         #self.ln1 = nn.LayerNorm([256, 20, 20])
