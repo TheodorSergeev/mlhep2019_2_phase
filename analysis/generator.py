@@ -62,3 +62,23 @@ class ModelGConvTranspose(nn.Module):
         EnergyDeposit = self.conv6(EnergyDeposit)
 
         return EnergyDeposit
+
+
+class EnsembleGenerator(nn.Module):
+    def __init__(self, modelA, modelB):
+        super(EnsembleGenerator, self).__init__()
+        self.modelA = modelA
+        self.modelB = modelB
+        
+    def forward(self, noise, batch, pdg_arr):
+        x1 = self.modelA(noise, batch)
+        x2 = self.modelB(noise, batch)
+        output = torch.zeros_like(x1)
+
+        for i in range(len(pdg_arr)):
+            if pdg_arr[i] == 11.:
+                output[i] = x1[i]
+            else: # (pdg_arr[i] == 22.)
+                output[i] = x2[i]
+
+        return output
