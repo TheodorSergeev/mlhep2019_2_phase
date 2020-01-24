@@ -58,7 +58,7 @@ def main():
     ParticleMomentum_test = torch.tensor(data_test['ParticleMomentum']).float()
     ParticlePoint_test = torch.tensor(data_test['ParticlePoint'][:, :2]).float()
     ParticleMomentum_ParticlePoint_test = torch.cat([ParticleMomentum_test, ParticlePoint_test], dim=1)
-    ParticlePDG_test = torch.tensor(data_val['ParticlePDG']).float()    
+    ParticlePDG_test = torch.tensor(data_test['ParticlePDG']).float()    
 
     calo_dataset_test = utils.TensorDataset(ParticleMomentum_ParticlePoint_test, ParticlePDG_test)
     calo_dataloader_test = torch.utils.data.DataLoader(calo_dataset_test, batch_size=1024, shuffle=False)
@@ -67,7 +67,7 @@ def main():
         EnergyDeposit_test = []
         for ParticleMomentum_ParticlePoint_test_batch, ParticlePDG_test_batch in tqdm(calo_dataloader_test):
             noise = torch.randn(len(ParticleMomentum_ParticlePoint_test_batch), NOISE_DIM)
-            EnergyDeposit_test_batch = generator_cpu_ensemble(noise, ParticleMomentum_ParticlePoint_test_batc, 
+            EnergyDeposit_test_batch = generator_cpu_ensemble(noise, ParticleMomentum_ParticlePoint_test_batch, 
                                                               ParticlePDG_test_batch).detach().numpy()
             EnergyDeposit_test.append(EnergyDeposit_test_batch)
         np.savez_compressed(test_data_path_out, 
