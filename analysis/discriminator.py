@@ -5,9 +5,9 @@ import torch.nn.functional as F
 from torch.nn.utils import spectral_norm
 
 
-class ModelD(nn.Module):
+class DeepDiscriminator(nn.Module):
     def __init__(self):
-        super(ModelD, self).__init__()
+        super(DeepDiscriminator, self).__init__()
         
         # 30x30x1
         self.conv1 = spectral_norm(nn.Conv2d( 1,   32, kernel_size=(3,3), stride=(1,1), padding=(1,1))) # 30x30x32
@@ -34,13 +34,7 @@ class ModelD(nn.Module):
         X = self.pool2(X)
         
         X = X.view(len(X), -1)
-
-        # for both electrons and photons
-        MEAN_TRAIN_MOM_POINT = torch.Tensor([-0.02729166, -0.02461355, 20.90919671, 
-                                             -0.00788923,  0.00720004])
-        STD_TRAIN_MOM_POINT  = torch.Tensor([ 5.48167024,  5.43016916, 24.32682144,  
-                                              2.69976438,  2.67467291])
-        mom_point = (ParticleMomentum_ParticlePoint - MEAN_TRAIN_MOM_POINT) / STD_TRAIN_MOM_POINT
+        mom_point = (ParticleMomentum_ParticlePoint)# - MEAN_TRAIN_MOM_POINT) / STD_TRAIN_MOM_POINT
         X = torch.cat([X, mom_point], dim=1)
         
         X = F.leaky_relu(self.fc1(X))

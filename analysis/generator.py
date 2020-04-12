@@ -3,70 +3,111 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.nn.utils import spectral_norm
 
-NOISE_DIM = 10
+NOISE_DIM = 30
 
-# PositiveEnergyReLUGenerator
-class ModelGConvTranspose(nn.Module):
-    def __init__(self, z_dim):
+class DeepGenerator(nn.Module):
+    def __init__(self, pretrained_vae, z_dim=30):
+        super(DeepGenerator, self).__init__()
+        
+        self.VAE = pretrained_vae
         self.z_dim = z_dim
-        super(ModelGConvTranspose, self).__init__()
-        self.fc1 = nn.Linear(self.z_dim, 64)
-        self.fc2 = nn.Linear(64, 128)
-        self.fc3 = nn.Linear(128, 512)
-        self.fc4 = nn.Linear(512, 20736)
-
-        self.conv1 = spectral_norm(nn.ConvTranspose2d(256, 256, 3, stride=2, output_padding=1))
-        self.bn1 = nn.BatchNorm2d(256)
-        self.conv2 = spectral_norm(nn.ConvTranspose2d(256, 128, 3))
-        self.bn2 = nn.BatchNorm2d(128)
-        self.conv3 = spectral_norm(nn.ConvTranspose2d(128, 64, 3))
-        self.bn3 = nn.BatchNorm2d(64)
-        self.conv4 = spectral_norm(nn.ConvTranspose2d(64, 32, 3))
-        self.bn4 = nn.BatchNorm2d(32)
-        self.conv5 = spectral_norm(nn.ConvTranspose2d(32, 16, 3))
-        self.bn5 = nn.BatchNorm2d(16)
-        self.conv6 = spectral_norm(nn.ConvTranspose2d(16, 1, 3))
         
-    def forward(self, z, ParticleMomentum_ParticlePoint):
-        # for both electrons and photons
-        MEAN_TRAIN_MOM_POINT = torch.Tensor([-0.02729166, -0.02461355, 20.90919671, 
-                                             -0.00788923,  0.00720004])
-        STD_TRAIN_MOM_POINT  = torch.Tensor([ 5.48167024,  5.43016916, 24.32682144,  
-                                              2.69976438,  2.67467291])
+        self.conv1 = nn.Conv2d(1, 16, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+        self.conv2 = nn.Conv2d(16, 16, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+        self.conv3 = nn.Conv2d(16, 1, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+        return
 
-        mom_point = (ParticleMomentum_ParticlePoint - MEAN_TRAIN_MOM_POINT) / STD_TRAIN_MOM_POINT
-        #mom_point = ParticleMomentum_ParticlePoint
-        x = torch.cat([z, mom_point], dim=1)
-        x = F.leaky_relu(self.fc1(z))
-        x = F.leaky_relu(self.fc2(x))
-        x = F.leaky_relu(self.fc3(x))
-        x = F.leaky_relu(self.fc4(x))
-        EnergyDeposit = x.view(-1, 256, 9, 9)
+    def forward(self, z, ParticleMomentum_ParticlePoint, E):
+        #x = torch.cat([z, ParticleMomentum_ParticlePoint], dim=1)
+        E = F.leaky_relu(self.conv1(E))
+        E = F.leaky_relu(self.conv2(E))
+        E = F.relu(self.conv3(E))
+        return E
+
+
+# courtesy of George Kostenkov
+# https://github.com/GeorgeKostenkov/mlhep2019_2_phase/blob/master/analysis/VAE_Kostenkov%20(1).ipynb
+
+class VAE(nn.Module):
+    def __init__(self, h_dim=128, z_dim=30):
+        super(VAE, self).__init__()
+    
+        self.conv1 = nn.Conv2d(1, 16, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+        self.conv2 = nn.Conv2d(16, 32, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+        self.conv3 = nn.Conv2d(32, 32, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+        self.pool1 = nn.MaxPool2d(2) #15x15
+        self.conv4 = nn.Conv2d(32, 64, kernel_size=(3, 3), stride=(2, 2)) #7x7
+        self.conv5 = nn.Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+        self.conv6 = nn.Conv2d(64, 128, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+  
+        self.bn1 = nn.BatchNorm2d(16)
+        self.bn2 = nn.BatchNorm2d(32)
+        self.bn3 = nn.BatchNorm2d(32)
+        self.bn4 = nn.BatchNorm2d(64)
+        self.bn5 = nn.BatchNorm2d(64)
+        self.bn6 = nn.BatchNorm2d(128)
+    
+        self.fc1 = nn.Linear(h_dim + 5, z_dim)
+        self.fc2 = nn.Linear(h_dim + 5, z_dim)
+        self.fc3 = nn.Linear(z_dim + 5, h_dim)
+        self.fc4 = nn.Linear(h_dim, 512)
+        self.fc5 = nn.Linear(512, 3200)
+
+        self.conv1t = nn.ConvTranspose2d(128, 128, kernel_size=(3, 3))
+        self.conv2t = nn.ConvTranspose2d(128, 128, kernel_size=(3, 3))
+        self.conv3t = nn.ConvTranspose2d(128, 64, kernel_size=(3, 3))
+        self.conv4t = nn.ConvTranspose2d(64, 64, kernel_size=(3, 3), stride=(2, 2), output_padding=(1, 1))
+        self.conv5t = nn.ConvTranspose2d(64, 32, kernel_size=(3, 3))
+        self.conv6t = nn.ConvTranspose2d(32, 16, kernel_size=(3, 3))
+        self.conv7t = nn.ConvTranspose2d(16, 1, kernel_size=(3, 3))
+    
+        self.bn1t = nn.BatchNorm2d(128)
+        self.bn2t = nn.BatchNorm2d(128)
+        self.bn3t = nn.BatchNorm2d(64)
+        self.bn4t = nn.BatchNorm2d(64)
+        self.bn5t = nn.BatchNorm2d(32)
+        self.bn6t = nn.BatchNorm2d(16)
+
+    def encode(self, x, params):
+        #print(x.shape)
+        x = F.leaky_relu(self.bn1(self.conv1(x)))
+        #print(1)   # 30x30
+        x = F.leaky_relu(self.bn2(self.conv2(x)))
+        #print(1)
+        x = self.bn3(self.conv3(x))
+        #print(1)
+        x = F.leaky_relu(self.pool1(x))             # 15x15
+        x = F.leaky_relu(self.bn4(self.conv4(x)))  
+        x = F.leaky_relu(self.bn5(self.conv5(x)))  
+        x = self.bn6(self.conv6(x))                 # 7x7
+    
+        x = F.leaky_relu(nn.MaxPool2d(kernel_size=x.size()[2:])(x))
+        x = x.view(x.size(0), -1)
+        x = F.leaky_relu(x)
+        x = torch.cat([x, params], dim=1)
+        return F.leaky_relu(self.fc1(x)), F.leaky_relu(self.fc2(x))
+
+    def reparameterize(self, mu, logvar):
+        std = torch.exp(0.5 * logvar)
+        eps = torch.randn_like(std)
+        return mu + eps * std
+
+    def decode(self, z, params):
+        z = F.leaky_relu(self.fc3(torch.cat([z, params], dim=1)))
+        z = F.leaky_relu(self.fc4(z))
+        z = F.leaky_relu(self.fc5(z))
+        z = z.view(-1, 128, 5, 5)           # 5x5x128
+        z = F.leaky_relu(self.bn1t(self.conv1t(z)))     # 7x7x128
+        z = F.leaky_relu(self.bn2t(self.conv2t(z))) # 9x9x128
+        z = F.leaky_relu(self.bn3t(self.conv3t(z))) # 11x11x64
+        z = F.leaky_relu(self.bn4t(self.conv4t(z))) # 24x24x64
+        z = F.leaky_relu(self.bn5t(self.conv5t(z))) # 26x26x32
+        z = F.leaky_relu(self.bn6t(self.conv6t(z))) # 28x28x16
+        z = F.leaky_relu(self.conv7t(z))                    # 30x30x1
         
-        EnergyDeposit = F.leaky_relu(self.bn1(self.conv1(EnergyDeposit)))
-        EnergyDeposit = F.leaky_relu(self.bn2(self.conv2(EnergyDeposit)))
-        EnergyDeposit = F.leaky_relu(self.bn3(self.conv3(EnergyDeposit)))
-        EnergyDeposit = F.leaky_relu(self.bn4(self.conv4(EnergyDeposit)))
-        EnergyDeposit = F.leaky_relu(self.bn5(self.conv5(EnergyDeposit)))
-        EnergyDeposit = F.relu(self.conv6(EnergyDeposit))
+        return z
 
-        return EnergyDeposit
-
-class EnsembleGenerator(nn.Module):
-    def __init__(self, modelA, modelB):
-        super(EnsembleGenerator, self).__init__()
-        self.modelA = modelA
-        self.modelB = modelB
-        
-    def forward(self, noise, batch, pdg_arr):
-        x1 = self.modelA(noise, batch)
-        x2 = self.modelB(noise, batch)
-        output = torch.zeros_like(x1)
-
-        for i in range(len(pdg_arr)):
-            if pdg_arr[i] == 11.:
-                output[i] = x1[i]
-            else: # (pdg_arr[i] == 22.)
-                output[i] = x2[i]
-
-        return output
+    def forward(self, x, params):
+        mu, logvar = self.encode(x, params)
+        z = self.reparameterize(mu, logvar)
+        return self.decode(z, params), mu, logvar
