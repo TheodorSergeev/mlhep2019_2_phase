@@ -12,18 +12,23 @@ class DeepGenerator(nn.Module):
         self.VAE = pretrained_vae
         self.z_dim = z_dim
         
-        self.conv1 = nn.Conv2d(1, 16, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
-        self.conv2 = nn.Conv2d(16, 16, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
-        self.conv3 = nn.Conv2d(16, 1, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+        self.conv1 = nn.Conv2d(1,  16, kernel_size=(5, 5), stride=(1, 1), padding=(2, 2))
+        self.conv2 = nn.Conv2d(16, 32, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+        self.conv3 = nn.Conv2d(32, 16, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+        self.conv4 = nn.Conv2d(16, 1,  kernel_size=(5, 5), stride=(1, 1), padding=(2, 2))
         return
 
-    def forward(self, z, ParticleMomentum_ParticlePoint, E):
-        #x = torch.cat([z, ParticleMomentum_ParticlePoint], dim=1)
-        E = F.leaky_relu(self.conv1(E))
-        E = F.leaky_relu(self.conv2(E))
-        E = F.relu(self.conv3(E))
-        return E
+    def forward(self, z, ParticleMomentum_ParticlePoint, E_vae):
+        # z -> fc -> 30x30x1
+        # (p,r) -> fc -> 30x30x1
+        # concat => 30x30x3
 
+        #x = torch.cat([z, ParticleMomentum_ParticlePoint], dim=1)
+        E = F.leaky_relu(self.conv1(E_vae))
+        E = F.leaky_relu(self.conv2(E))
+        E = F.leaky_relu(self.conv3(E))
+        E = F.relu(self.conv4(E))
+        return E
 
 # courtesy of George Kostenkov
 # https://github.com/GeorgeKostenkov/mlhep2019_2_phase/blob/master/analysis/VAE_Kostenkov%20(1).ipynb
