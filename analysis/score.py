@@ -1,3 +1,6 @@
+# taken from https://github.com/SchattenGenie/mlhep2019_2_phase/tree/master/analysis
+# slightly edited to allow for correct imports
+
 #!/usr/bin/env python
 
 # Scoring program for the AutoML challenge
@@ -39,9 +42,10 @@ metric_name = 'LHCb_CaloGAN_regression_metric'
 ParticleMomentum_MEAN = np.array([0., 0.])
 ParticlePoint_MEAN = np.array([0., 0.])
 
-from prd_score import compute_prd_from_embedding
-from calogan_metrics import get_assymetry, get_shower_width, get_sparsity_level
-from calogan_metrics import get_physical_stats
+from .prd_score import compute_prd_from_embedding
+from .calogan_metrics import get_assymetry, get_shower_width, get_sparsity_level
+from .calogan_metrics import get_physical_stats
+
 from sklearn.metrics import auc
 import numpy as np
 import torch

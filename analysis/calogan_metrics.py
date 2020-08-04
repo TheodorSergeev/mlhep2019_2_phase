@@ -1,3 +1,5 @@
+# taken from https://github.com/SchattenGenie/mlhep2019_2_phase/tree/master/analysis
+
 import numpy as np
 def get_assymetry(imgs, ps, points, orthog=False):
     assym_res = []
