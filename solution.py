@@ -11,7 +11,7 @@ import torch.utils.data as utils
 import os
 
 
-BATCH_SIZE = 256
+BATCH_SIZE = 1024
 
 def main():
     input_dir, output_dir = sys.argv[1:]
