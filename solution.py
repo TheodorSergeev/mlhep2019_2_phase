@@ -23,7 +23,7 @@ def main():
     test_data_path_out = output_dir + '/data_test_prediction.npz'
     
     generator_cpu = Generator(NOISE_DIM)
-    generator_cpu.load_state_dict(torch.load(os.path.dirname(os.path.abspath(__file__)) + 'generator.pt'))
+    generator_cpu.load_state_dict(torch.load(os.path.dirname(os.path.abspath(__file__)) + '/generator.pt'))
     generator_cpu.eval()
     
     # val
