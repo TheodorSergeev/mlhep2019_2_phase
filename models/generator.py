@@ -5,6 +5,7 @@ import torch.nn.functional as F
 
 NOISE_DIM = 256
 
+
 class Generator(nn.Module):
     def __init__(self, z_dim, act_func = F.relu):
         super(Generator, self).__init__()
@@ -30,7 +31,6 @@ class Generator(nn.Module):
         self.bn2 = nn.BatchNorm2d(64)
         self.bn3 = nn.BatchNorm2d(32)
 
-                
     def forward(self, z, ParticleMomentum_ParticlePoint):
         x = torch.cat([z, ParticleMomentum_ParticlePoint], dim=1)
         #print(x.shape)

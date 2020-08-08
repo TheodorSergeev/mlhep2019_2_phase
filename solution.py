@@ -15,7 +15,9 @@ BATCH_SIZE = 1024
 
 def main():
     input_dir, output_dir = sys.argv[1:]
-    
+        
+    print('Pytorch version:', torch.__version__)
+
     data_val = np.load(input_dir + '/data_val.npz', allow_pickle=True)
     val_data_path_out = output_dir + '/data_val_prediction.npz'
 
